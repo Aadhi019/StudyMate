@@ -1,0 +1,15 @@
+streamlit
+langchain
+langchain-ibm
+langchain-community
+langchain-huggingface
+sentence-transformers
+faiss-cpu
+PyMuPDF
+python-dotenv
+numpy
+Pillow
+pytesseract
+pdf2image
+huggingface_hub
+transformers
