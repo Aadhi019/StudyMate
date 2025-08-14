@@ -128,11 +128,46 @@ def create_simple_answer(docs, question):
         return f"I found some relevant content in your documents, but couldn't extract a specific answer to '{question}'. Here's some related information:\n\n{context_text[:500]}..."
 
 def get_conversational_chain():
-    """Create a conversational chain for Q&A with fallback to simple text processing."""
-    # For now, return None to use the simple text processing fallback
-    # This ensures the application works reliably without external model dependencies
-    logging.info("Using simple text processing for reliable operation")
-    return None
+    """Create a conversational chain for Q&A using IBM Granite 13B Instruct model."""
+    prompt_template = """You are StudyMate, an AI academic assistant designed to help students understand their study materials.
+Use the following pieces of retrieved context from the uploaded documents to answer the question accurately and comprehensively.
+
+Instructions:
+- Provide clear, educational explanations
+- If you don't know the answer based on the context, say so honestly
+- Use only the information from the provided context
+- Structure your answer in a student-friendly way
+- Include relevant details and examples when available
+
+Context:
+{context}
+
+Question: {question}
+
+StudyMate Answer:
+"""
+
+    try:
+        # Using IBM Granite 13B Instruct model
+        model_id = "ibm/granite-13b-instruct-v2"
+        llm = HuggingFaceEndpoint(
+            repo_id=model_id,
+            huggingfacehub_api_token=HF_API_KEY,
+            temperature=0.3,
+            max_new_tokens=512,
+            top_p=0.9,
+            repetition_penalty=1.1
+        )
+        logging.info(f"Successfully loaded IBM Granite model: {model_id}")
+
+        prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+        return load_qa_chain(llm, chain_type="stuff", prompt=prompt)
+
+    except Exception as e:
+        logging.error(f"Failed to load IBM Granite model: {e}")
+        # Fallback to simple text processing if model fails
+        logging.warning("Falling back to simple text processing")
+        return None
 
 def process_question(user_question, vector_store):
     """Process a user question using the vector store and LLM chain."""
